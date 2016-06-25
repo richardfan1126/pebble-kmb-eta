@@ -10,8 +10,41 @@ var moment = require('moment');
 var Dataset = require('Dataset');
 
 var serverTime;
-
 var etaPage;
+
+function showMainMenu(){
+  var mainMenu = new UI.Menu({
+    sections: [{
+      title: '主頁',
+      items: [
+        {
+          title: '路線列表',
+          target: 'routeList'
+        },
+        {
+          title: '清除快取',
+          target: 'clearCache'
+        }
+      ]
+    }]
+  });
+  
+  mainMenu.on('select', function(e){
+    switch(e.item.target){
+      case 'routeList':
+        showRouteListMenu();
+        break;
+        
+      case 'clearCache':
+        showClearCacheMenu();
+        break;
+        
+      default:
+    }
+  });
+  
+  mainMenu.show();
+}
 
 function showRouteListMenu(){
   var menu = new UI.Menu({
@@ -31,7 +64,7 @@ function showRouteListMenu(){
     }
     
     menu.section(0, {
-      title: 'Route List',
+      title: '路線列表',
       items: items
     });
   };
@@ -49,31 +82,40 @@ function showRouteListMenu(){
 
 function showDirectionSelectMenu(routeNo){
   var menu = new UI.Menu({
-    sections: [{
-      title: routeNo,
-      items: [
-        {
-          title: 'GO',
-          direction: 1
-        },
-        {
-          title: 'BACK',
-          direction: 2
-        },
-      ]
-    }]
+    sections: []
   });
   
+  var items = [];
+  
+  for(var i=1; i<=2; i++){
+    (function(tmp_routeNo, index){
+      var successCallback = function(data){
+        items.push({
+          title: "往:\n" + data,
+          direction: index,
+          destionationName: data
+        });
+        
+        menu.section(0, {
+          title: routeNo,
+          items: items
+        });
+      };
+    
+      Dataset.getDestinationName(tmp_routeNo, index, successCallback);
+    }(routeNo, i));
+  }
+    
   menu.show();
   
   menu.on('select', function(e){
     var item = e.item;
     
-    showRouteStopMenu(routeNo, item.direction);
+    showRouteStopMenu(routeNo, item.direction, item.destionationName);
   });
 }
 
-function showRouteStopMenu(routeNo, direction){
+function showRouteStopMenu(routeNo, direction, destionationName){
   var menu = new UI.Menu({
     sections: []
   });
@@ -85,10 +127,10 @@ function showRouteStopMenu(routeNo, direction){
       var station = data[i];
       
       items.push({
-        title: station.title_eng,
+        title: station.title_chi,
         stopNo: station.subarea.replace(/[-+.^:,]/g, ""),
         stopSeq: i,
-        stopName: station.title_eng
+        stopName: station.title_chi
       });
     }
     
@@ -105,28 +147,13 @@ function showRouteStopMenu(routeNo, direction){
   menu.on('select', function(e){
     var item = e.item;
     
-    showEtaPage(routeNo, direction, item.stopNo, item.stopSeq, item.stopName);
+    showEtaPage(routeNo, direction, item.stopNo, item.stopSeq, item.stopName, destionationName);
   });
 }
 
-function showEtaPage(routeNo, direction, stopNo, stopSeq, stopName){
-  var directionText;
-   
-  switch(direction){
-    case 1:
-      directionText = 'GO';
-      break;
-      
-    case 2:
-      directionText = 'BACK';
-      break;
-      
-    default:
-      directionText = 'GO';
-  }
-  
+function showEtaPage(routeNo, direction, stopNo, stopSeq, stopName, destionationName){
   etaPage = new UI.Card({
-    title: routeNo + ' (' + directionText + ')',
+    title: routeNo + "\n(往: " + destionationName + ')',
     subtitle: stopName,
     scrollable: true,
     body: ''
@@ -163,7 +190,7 @@ function refreshEtaPage(route, direction, stopNo, stopSeq){
       var arriveTime = moment(data.response[i].t.substring(0,5), 'HH:mm');
       var eta = getEta(arriveTime);
       
-      content += eta + " Minutes\n";
+      content += eta + " 分鐘\n";
     }
     
     etaPage.body(content);
@@ -179,4 +206,36 @@ function getServerTime(){
   });
 }
 
-showRouteListMenu();
+function showClearCacheMenu(){
+  var clearCacheMenu = new UI.Menu({
+    sections: [{
+      title: '清除快取?',
+      items: [
+        {
+          title: '是',
+          isConfirm: true
+        },
+        {
+          title: '否',
+          isConfirm: false
+        }
+      ]
+    }]
+  });
+  
+  clearCacheMenu.on('select', function(e){
+    if(e.item.isConfirm){
+      clearCache();
+    }
+  
+    clearCacheMenu.hide();
+  });
+  
+  clearCacheMenu.show();
+}
+
+function clearCache(){
+  Dataset.clearCache();
+}
+
+showMainMenu();

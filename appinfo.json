@@ -3,7 +3,7 @@
     "capabilities": [
         ""
     ],
-    "companyName": "richardfan1126@gmail.com",
+    "companyName": "Richard Fan",
     "longName": "KMB",
     "projectType": "pebblejs",
     "resources": {
@@ -33,6 +33,11 @@
     },
     "sdkVersion": "3",
     "shortName": "KMB",
+    "targetPlatforms": [
+        "aplite",
+        "basalt",
+        "chalk"
+    ],
     "uuid": "06a15f8a-3a83-45f1-8f19-2c53bcdb6e73",
     "versionCode": 1,
     "versionLabel": "1.0",
