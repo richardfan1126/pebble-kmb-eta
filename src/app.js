@@ -15,7 +15,7 @@ var etaPage;
 var mainMenu;
 
 var lang;
-var serverTime;
+var serverTimeDiff;
 
 function showMainMenu(){
   getLang();
@@ -229,6 +229,8 @@ function showLoading(){
 }
 
 function getEta(arriveTime){
+  var serverTime = moment().subtract(serverTimeDiff, 'seconds');
+  
   return Math.ceil(arriveTime.diff(serverTime, 'minutes', true));
 }
 
@@ -258,7 +260,8 @@ function getServerTime(){
     url: 'http://etadatafeed.kmb.hk:1933/GetData.ashx?type=Server_T'
   }, function(data){
     data = JSON.parse(data);
-    serverTime = moment(data[0].stime);
+    var serverTime = moment(data[0].stime);
+    serverTimeDiff = moment().diff(serverTime, 'seconds');
   });
 }
 
