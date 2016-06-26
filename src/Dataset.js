@@ -16,13 +16,25 @@ var Dataset = {
         url : 'http://etadatafeed.kmb.hk:1933/GetData.ashx?type=ETA_R',
         method: 'get'
       }, function(data){
-        data = JSON.parse(data);
+        var routeList = {};
         
+        data = JSON.parse(data);
         data = data[0].r_no.split(',');
         
-        Settings.data(ROUTE_LIST_STORAGE_KEY, data);
+        for(var i=0; i<data.length; i++){
+          var routeNo = data[i];
+          var firstLetter = routeNo[0];
+          
+          if(firstLetter in routeList){
+            routeList[firstLetter].push(routeNo);
+          }else{
+            routeList[firstLetter] = [routeNo];
+          }
+        }
         
-        successCallback(data);
+        Settings.data(ROUTE_LIST_STORAGE_KEY, routeList);
+        
+        successCallback(routeList);
       });
     }
   },

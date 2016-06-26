@@ -69,12 +69,44 @@ function showRouteListMenu(){
   var successCallback = function(data){
     var items = [];
     
-    for(var i=0; i<data.length; i++){
-      var route = data[i];
+    for(var firstLetter in data){
+      items.push({
+        title: firstLetter,
+        key: firstLetter
+      });
+    }
+    
+    menu.section(0, {
+      title: lang == 'chi' ? '路線列表 (首數字)' : 'Route List (First Digit)',
+      items: items
+    });
+  };
+  
+  Dataset.getRouteList(successCallback);
+  
+  menu.show();
+  
+  menu.on('select', function(e){
+    var item = e.item;
+    
+    showRouteListSubMenu(item.key);
+  });
+}
+
+function showRouteListSubMenu(key){
+  var menu = new UI.Menu({
+    sections: []
+  });
+  
+  var successCallback = function(data){
+    var items = [];
+    
+    for(var i=0; i<data[key].length; i++){
+      var routeNo = data[key][i];
       
       items.push({
-        title: route,
-        routeNo: route
+        title: routeNo,
+        routeNo: routeNo
       });
     }
     
