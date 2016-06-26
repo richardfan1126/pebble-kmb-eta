@@ -7,23 +7,34 @@
 var UI = require('ui');
 var ajax = require('ajax');
 var moment = require('moment');
-var Dataset = require('Dataset');
 
-var serverTime;
+var Dataset = require('Dataset');
+var AppConfig = require('AppConfig');
+
 var etaPage;
+var mainMenu;
+
+var lang;
+var serverTime;
 
 function showMainMenu(){
-  var mainMenu = new UI.Menu({
+  getLang();
+  
+  mainMenu = new UI.Menu({
     sections: [{
-      title: '主頁',
+      title: lang == 'chi' ? '主頁' : 'Home',
       items: [
         {
-          title: '路線列表',
+          title: lang == 'chi' ? '路線列表' : 'Route list',
           target: 'routeList'
         },
         {
-          title: '清除快取',
+          title: lang == 'chi' ? '清除快取' : 'Clear Cache',
           target: 'clearCache'
+        },
+        {
+          title: lang == 'chi' ? '選擇語言' : 'Select Language',
+          target: 'selectLang'
         }
       ]
     }]
@@ -37,6 +48,10 @@ function showMainMenu(){
         
       case 'clearCache':
         showClearCacheMenu();
+        break;
+        
+      case 'selectLang':
+        showLanguageSelectMenu();
         break;
         
       default:
@@ -64,7 +79,7 @@ function showRouteListMenu(){
     }
     
     menu.section(0, {
-      title: '路線列表',
+      title: lang == 'chi' ? '路線列表' : 'Route List',
       items: items
     });
   };
@@ -90,8 +105,11 @@ function showDirectionSelectMenu(routeNo){
   for(var i=1; i<=2; i++){
     (function(tmp_routeNo, index){
       var successCallback = function(data){
+        var title = lang == 'chi' ? "往:\n" : "To:\n";
+        title += data;
+        
         items.push({
-          title: "往:\n" + data,
+          title: title,
           direction: index,
           destionationName: data
         });
@@ -102,7 +120,7 @@ function showDirectionSelectMenu(routeNo){
         });
       };
     
-      Dataset.getDestinationName(tmp_routeNo, index, successCallback);
+      Dataset.getDestinationName(tmp_routeNo, index, lang, successCallback);
     }(routeNo, i));
   }
     
@@ -127,10 +145,10 @@ function showRouteStopMenu(routeNo, direction, destionationName){
       var station = data[i];
       
       items.push({
-        title: station.title_chi,
+        title: lang == 'chi' ? station.title_chi : station.title_eng,
         stopNo: station.subarea.replace(/[-+.^:,]/g, ""),
         stopSeq: i,
-        stopName: station.title_chi
+        stopName: lang == 'chi' ? station.title_chi : station.title_eng
       });
     }
     
@@ -140,7 +158,7 @@ function showRouteStopMenu(routeNo, direction, destionationName){
     });
   };
   
-  Dataset.getRouteInfo(routeNo, direction, successCallback);
+  Dataset.getRouteInfo(routeNo, direction, lang, successCallback);
   
   menu.show();
   
@@ -152,8 +170,13 @@ function showRouteStopMenu(routeNo, direction, destionationName){
 }
 
 function showEtaPage(routeNo, direction, stopNo, stopSeq, stopName, destionationName){
+  var title = routeNo;
+  title += lang == 'chi' ? "\n(往: " : "\n(To: ";
+  title += destionationName;
+  title += ')';
+  
   etaPage = new UI.Card({
-    title: routeNo + "\n(往: " + destionationName + ')',
+    title: title,
     subtitle: stopName,
     scrollable: true,
     body: ''
@@ -170,7 +193,7 @@ function showEtaPage(routeNo, direction, stopNo, stopSeq, stopName, destionation
 }
   
 function showLoading(){
-  etaPage.body('Loading...');
+  etaPage.body(lang == 'chi' ? '更新中...' : 'Refreshing...');
 }
 
 function getEta(arriveTime){
@@ -190,7 +213,8 @@ function refreshEtaPage(route, direction, stopNo, stopSeq){
       var arriveTime = moment(data.response[i].t.substring(0,5), 'HH:mm');
       var eta = getEta(arriveTime);
       
-      content += eta + " 分鐘\n";
+      content += eta;
+      content += lang == 'chi' ? " 分鐘\n" : " minutes\n";
     }
     
     etaPage.body(content);
@@ -209,14 +233,14 @@ function getServerTime(){
 function showClearCacheMenu(){
   var clearCacheMenu = new UI.Menu({
     sections: [{
-      title: '清除快取?',
+      title: 'chi' ? '清除快取?' : 'Clear Cache?',
       items: [
         {
-          title: '是',
+          title: 'chi' ? '是' : 'Yes',
           isConfirm: true
         },
         {
-          title: '否',
+          title: 'chi' ? '否' : 'No',
           isConfirm: false
         }
       ]
@@ -225,17 +249,51 @@ function showClearCacheMenu(){
   
   clearCacheMenu.on('select', function(e){
     if(e.item.isConfirm){
-      clearCache();
+      clearCache(function(){
+        clearCacheMenu.hide();
+      });
+    }else{
+      clearCacheMenu.hide();
     }
-  
-    clearCacheMenu.hide();
   });
   
   clearCacheMenu.show();
 }
 
-function clearCache(){
-  Dataset.clearCache();
+function clearCache(successCallback){
+  Dataset.clearCache(successCallback);
+}
+
+function showLanguageSelectMenu(){
+  var langSelectMenu = new UI.Menu({
+    sections: [{
+      title: lang == 'chi' ? '選擇語言' : 'Select Langauge',
+      items: [
+        {
+          title: '中文',
+          lang: 'chi'
+        },
+        {
+          title: 'English',
+          lang: 'eng'
+        }
+      ]
+    }]
+  });
+  
+  langSelectMenu.on('select', function(e){
+    AppConfig.setLanguage(e.item.lang, function(){
+      langSelectMenu.hide();
+      mainMenu.hide();
+      showMainMenu();
+    });
+  });
+  
+  langSelectMenu.show();
+}
+
+function getLang(){
+  lang = AppConfig.getLanguage();
 }
 
 showMainMenu();

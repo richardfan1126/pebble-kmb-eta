@@ -26,7 +26,7 @@ var Dataset = {
       });
     }
   },
-  'getRouteInfo' : function(bn, dir, successCallback){
+  'getRouteInfo' : function(bn, dir, lang, successCallback){
     var storageKey = ROUTE_INFO_STORAGE_KEY_PREFIX + bn + '-' + dir;
     var routeInfo = Settings.data(storageKey);
     
@@ -48,7 +48,7 @@ var Dataset = {
       });
     }
   },
-  'getDestinationName' : function(bn, dir, successCallback){
+  'getDestinationName' : function(bn, dir, lang, successCallback){
     var storageKey = DESTINATION_STORAGE_KEY_PREFIX + bn + '-' + dir;
     var destinationName = Settings.data(storageKey);
     
@@ -57,21 +57,23 @@ var Dataset = {
     }else{
       var getRoutInfoCallback = function(data){
         var lastStop = data[data.length - 1];
-        var destinationName = lastStop.title_chi;
+        var destinationName = lang == 'chi' ? lastStop.title_chi : lastStop.title_eng;
         
         Settings.data(storageKey, destinationName);
         successCallback(destinationName);
       };
       
-      Dataset.getRouteInfo(bn, dir, getRoutInfoCallback);
+      Dataset.getRouteInfo(bn, dir, lang, getRoutInfoCallback);
     }
   },
-  'clearCache' : function(){
+  'clearCache' : function(successCallback){
     var caches = Settings.data();
     
     for(var key in caches){
       Settings.data(key, null);
     }
+    
+    successCallback();
   }
 };
 
