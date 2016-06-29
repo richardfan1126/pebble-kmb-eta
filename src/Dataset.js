@@ -1,6 +1,6 @@
-const ROUTE_LIST_STORAGE_KEY = 'route-list';
-const ROUTE_INFO_STORAGE_KEY_PREFIX = 'stop-list-';
-const DESTINATION_STORAGE_KEY_PREFIX = 'destination-';
+var ROUTE_LIST_STORAGE_KEY = 'route-list';
+var ROUTE_INFO_STORAGE_KEY_PREFIX = 'stop-list-';
+var DESTINATION_STORAGE_KEY_PREFIX = 'destination-';
 
 var ajax = require('ajax');
 var Settings = require('settings');
@@ -9,7 +9,7 @@ var Dataset = {
   'getRouteList' : function(successCallback){
     var routeList = Settings.data(ROUTE_LIST_STORAGE_KEY);
     
-    if(typeof routeList != 'undefined' && routeList != null){
+    if(typeof routeList != 'undefined' && routeList !== null){
       successCallback(routeList);
     }else{
       ajax({
@@ -39,10 +39,10 @@ var Dataset = {
     }
   },
   'getRouteInfo' : function(bn, dir, lang, successCallback){
-    var storageKey = ROUTE_INFO_STORAGE_KEY_PREFIX + bn + '-' + dir;
+    var storageKey = ROUTE_INFO_STORAGE_KEY_PREFIX + bn + '-' + dir + '-' + lang;
     var routeInfo = Settings.data(storageKey);
     
-    if(typeof routeInfo != 'undefined' && routeInfo != null){
+    if(typeof routeInfo != 'undefined' && routeInfo !== null){
       successCallback(routeInfo);
     }else{
       ajax({
@@ -61,10 +61,10 @@ var Dataset = {
     }
   },
   'getDestinationName' : function(bn, dir, lang, successCallback){
-    var storageKey = DESTINATION_STORAGE_KEY_PREFIX + bn + '-' + dir;
+    var storageKey = DESTINATION_STORAGE_KEY_PREFIX + bn + '-' + dir + '-' + lang;
     var destinationName = Settings.data(storageKey);
     
-    if(typeof destinationName != 'undefined' && destinationName != null){
+    if(typeof destinationName != 'undefined' && destinationName !== null){
       successCallback(destinationName);
     }else{
       var getRoutInfoCallback = function(data){

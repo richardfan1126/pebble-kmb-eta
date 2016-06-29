@@ -10,16 +10,26 @@ var moment = require('moment');
 
 var Dataset = require('Dataset');
 var AppConfig = require('AppConfig');
+var Updater = require('Updater');
 
 var etaPage;
 var mainMenu;
+var updatingScreen;
 
 var lang;
 var serverTimeDiff;
 
-function showMainMenu(){
+function showUpdatingScreen(){
   getLang();
   
+  updatingScreen = new UI.Card({
+    title: lang == 'chi' ? '資料庫更新中...' : 'Database Updating...'
+  });
+  
+  updatingScreen.show();
+}
+
+function showMainMenu(){
   mainMenu = new UI.Menu({
     sections: [{
       title: lang == 'chi' ? '主頁' : 'Home',
@@ -29,8 +39,8 @@ function showMainMenu(){
           target: 'routeList'
         },
         {
-          title: lang == 'chi' ? '清除快取' : 'Clear Cache',
-          target: 'clearCache'
+          title: lang == 'chi' ? '更新資料庫' : 'Upate Database',
+          target: 'updateDatabase'
         },
         {
           title: lang == 'chi' ? '選擇語言' : 'Select Language',
@@ -46,8 +56,8 @@ function showMainMenu(){
         showRouteListMenu();
         break;
         
-      case 'clearCache':
-        showClearCacheMenu();
+      case 'updateDatabase':
+        showUpdateDatabaseMenu();
         break;
         
       case 'selectLang':
@@ -265,38 +275,37 @@ function getServerTime(){
   });
 }
 
-function showClearCacheMenu(){
-  var clearCacheMenu = new UI.Menu({
+function showUpdateDatabaseMenu(){
+  var updateDatabaseMenu = new UI.Menu({
     sections: [{
-      title: 'chi' ? '清除快取?' : 'Clear Cache?',
+      title: lang == 'chi' ? '更新資料庫?' : 'Upate Database?',
       items: [
         {
-          title: 'chi' ? '是' : 'Yes',
+          title: lang == 'chi' ? '是' : 'Yes',
           isConfirm: true
         },
         {
-          title: 'chi' ? '否' : 'No',
+          title: lang == 'chi' ? '否' : 'No',
           isConfirm: false
         }
       ]
     }]
   });
   
-  clearCacheMenu.on('select', function(e){
+  updateDatabaseMenu.on('select', function(e){
     if(e.item.isConfirm){
-      clearCache(function(){
-        clearCacheMenu.hide();
+      showUpdatingScreen();
+      
+      Updater.update(function(){
+        updatingScreen.hide();
+        updateDatabaseMenu.hide();
       });
     }else{
-      clearCacheMenu.hide();
+      updateDatabaseMenu.hide();
     }
   });
   
-  clearCacheMenu.show();
-}
-
-function clearCache(successCallback){
-  Dataset.clearCache(successCallback);
+  updateDatabaseMenu.show();
 }
 
 function showLanguageSelectMenu(){
@@ -320,6 +329,7 @@ function showLanguageSelectMenu(){
     AppConfig.setLanguage(e.item.lang, function(){
       langSelectMenu.hide();
       mainMenu.hide();
+      getLang();
       showMainMenu();
     });
   });
@@ -331,4 +341,9 @@ function getLang(){
   lang = AppConfig.getLanguage();
 }
 
-showMainMenu();
+showUpdatingScreen();
+
+Updater.checkDataDownloaded(function(){
+  updatingScreen.hide();
+  showMainMenu();
+});
